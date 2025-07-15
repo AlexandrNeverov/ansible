@@ -1,7 +1,86 @@
----
-- name: Install and configure Docker environment
-  hosts: docker
+- name: Install Docker, Docker Compose, Docker Swarm and Portainer
+  hosts: all
   become: true
 
-  roles:
-    - docker
+  tasks:
+
+    # Install required system dependencies
+    - name: Install system packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+
+    # Add Docker's official GPG key
+    - name: Add Docker GPG key
+      ansible.builtin.shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/docker-archive-keyring.gpg
+
+    # Add the Docker apt repository
+    - name: Add Docker APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable"
+        filename: docker
+        state: present
+
+    # Install Docker Engine
+    - name: Install Docker Engine packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: yes
+
+    # Ensure Docker service is running and enabled
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    # Install Docker Compose v2 (standalone binary)
+    - name: Install Docker Compose (v2)
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    # Verify Docker Compose is installed
+    - name: Check Docker Compose version
+      command: docker-compose --version
+      register: compose_result
+      ignore_errors: yes
+
+    # Initialize Docker Swarm if it's not already active
+    - name: Initialize Docker Swarm
+      shell: docker info | grep "Swarm: active" || docker swarm init
+      args:
+        warn: false
+
+    # Create a Docker volume for Portainer
+    - name: Create Docker volume for Portainer
+      docker_volume:
+        name: portainer_data
+
+    # Deploy Portainer CE as a Docker container
+    - name: Run Portainer container
+      docker_container:
+        name: portainer
+        image: portainer/portainer-ce
+        state: started
+        restart_policy: always
+        ports:
+          - "9000:9000"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - portainer_data:/data

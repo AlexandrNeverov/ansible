@@ -1,6 +1,0 @@
----
-- name: Install and configure Docker + Compose + UI + Swarm
-  hosts: docker
-  become: yes
-  roles:
-    - docker
