@@ -1,0 +1,32 @@
+# Ansible logs, cache, and retry files
+*.retry
+*.log
+*.pyc
+__pycache__/
+*.swp
+
+# Ansible facts cache (если включено)
+.fact_cache/
+
+# SSH keys and vault secrets (!!!)
+*.pem
+*.key
+vault_pass.txt
+vault.yml
+secrets.yml
+
+# Editor and OS junk
+.DS_Store
+*.bak
+*.tmp
+*.orig
+*~
+
+# Virtualenv or Python envs
+.venv/
+env/
+venv/
+pip-log.txt
+
+# VSCode settings (если ты используешь VSCode)
+.vscode/
