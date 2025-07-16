@@ -63,9 +63,7 @@
 
     # Initialize Docker Swarm if it's not already active
     - name: Initialize Docker Swarm
-      shell: docker info | grep "Swarm: active" || docker swarm init
-      args:
-        warn: false
+      ansible.builtin.shell: 'docker info | grep "Swarm: active" || docker swarm init'
 
     # Create a Docker volume for Portainer
     - name: Create Docker volume for Portainer
